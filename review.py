@@ -11,6 +11,7 @@ import json
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 import os
+from selenium.webdriver import ActionChains
 
 def init_crawler(url, driver=None):
     options = webdriver.ChromeOptions()
@@ -44,7 +45,22 @@ def click_component(driver, selector):
 def send_key(driver, selector, key):
     tmp = driver.find_element(By.CSS_SELECTOR, selector)
     tmp.send_keys(key)
-    
+
+def click_folder_component(driver, index):
+    driver.find_elements(By.CSS_SELECTOR,  "ul.list_detail a.link_txt")[index].click()
+
+def get_last_favorite_item(driver):
+    return driver.find_elements(By.CSS_SELECTOR, "ul.list_detail > li.FavoriteDetailItem")[-1]
+
+def get_favorite_data(driver):
+    items = driver.find_elements(By.CSS_SELECTOR, "ul.list_detail div.directory_info")
+    result = []
+    for item in items:
+        title = item.find_element(By.CSS_SELECTOR, "div.tit_directory").text.strip()
+        desc = item.find_element(By.CSS_SELECTOR, "div.desc_directory").text.strip()
+        result.append([title, desc])
+    return result
+
 load_dotenv(verbose=True)
 id = os.getenv("ID")
 pw = os.getenv("PW")
@@ -64,4 +80,25 @@ click_component(driver, "form#login-form div.wrap_btn > button.btn_confirm.submi
 click_component(driver, "div#dimmedLayer")
 click_component(driver, "a.link_myfavorite")
 
-folders = driver.find_elements(By.CSS_SELECTOR, "ul.list_detail a.link_txt")
+folders = driver.find_elements(By.CSS_SELECTOR,)
+folder_items = len(folders)
+for index in folder_items:
+    driver.get(url)
+    click_component(driver, "a.link_myfavorite")
+    time.sleep(1)
+
+    click_folder_component(driver, index)
+        
+    action = ActionChains(driver)
+    prev = ''
+
+    while True:
+        last_item = get_last_favorite_item(driver)
+        action.move_to_element(last_item).perform()
+
+        if last_item == prev:
+            break
+        prev = last_item
+        time.sleep(1)
+
+    data = get_favorite_data(driver)
